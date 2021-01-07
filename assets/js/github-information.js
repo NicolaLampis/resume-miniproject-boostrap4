@@ -15,8 +15,30 @@ function userInformationHTML(user) {
         </div>`;
 }
 
+function repoInformationHTML(repos) {
+    if (repos.length == 0) {
+        return `<div class="clearfix repo-list">No repos!</div>`;
+    }
+
+    var listItemsHTML = repos.map(function(repo) {
+        return `<li>
+                    <a href="${repo.html_url}" target="_blank">${repo.name}</a>
+                </li>`;
+    });
+
+    return `<div class="clearfix repo-list">
+                <p>
+                    <strong>Repo List:</strong>
+                </p>
+                <ul>
+                    ${listItemsHTML.join("\n")}
+                </ul>
+            </div>`;
+}
 
 function fetchGitHubInformation(event) {
+    $("#gh-user-data").html("");  // when the textbox is cleared the previus search is cleared too
+    $("#gh-repo-data").html("");
 
     var username = $("#gh-username").val();
     if (!username) {
@@ -30,14 +52,16 @@ function fetchGitHubInformation(event) {
         </div>`);
 
 
-//  Promis
-
+// Promises        
     $.when(
-        $.getJSON(`https://api.github.com/users/${username}`)
+        $.getJSON(`https://api.github.com/users/${username}`),
+        $.getJSON(`https://api.github.com/users/${username}/repos`)
     ).then(
-        function(response) {
-            var userData = response;
-            $("#gh-user-data").html(userInformationHTML(userData)); // Add function  userInformationHTML()  put it on top
+        function(firstResponse, secondResponse) {
+            var userData = firstResponse[0];
+            var repoData = secondResponse[0];
+            $("#gh-user-data").html(userInformationHTML(userData)); // put the functions on top
+            $("#gh-repo-data").html(repoInformationHTML(repoData));
         },
         function(errorResponse) {
             if (errorResponse.status === 404) {
@@ -50,5 +74,5 @@ function fetchGitHubInformation(event) {
             }
         });
 }
-
-
+// when refresh the page octocat is displayed
+$(document).ready(fetchGitHubInformation);
